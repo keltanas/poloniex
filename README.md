@@ -1,15 +1,15 @@
 # Poloniex API GO
-[![GoDoc](https://godoc.org/github.com/iowar/poloniex?status.svg)](https://godoc.org/github.com/iowar/poloniex)
+[![GoDoc](https://godoc.org/github.com/keltanas/poloniex?status.svg)](https://godoc.org/github.com/keltanas/poloniex)
 
 Poloniex Push, Public and Trading APIs.
 # Install
 ~~~sh
-$ go get -u github.com/iowar/poloniex
+$ go get -u github.com/keltanas/poloniex
 ~~~ 
 
 # APIs
 ~~~go
-import polo "github.com/iowar/poloniex"
+import polo "github.com/keltanas/poloniex"
 ~~~
 ## Push Api
 Create websocket client.
@@ -77,7 +77,7 @@ for {
 ~~~~
 
 ### Examples
-* See [Push Api Examples](https://github.com/iowar/poloniex/tree/master/examples/push)
+* See [Push Api Examples](https://github.com/keltanas/poloniex/tree/master/examples/push)
 
 ## Public Api
 ~~~go
@@ -100,7 +100,7 @@ if err != nil{
 }
 fmt.Println(resp)
 ~~~
-* See [Public Api Examples](https://github.com/iowar/poloniex/tree/master/examples/public)
+* See [Public Api Examples](https://github.com/keltanas/poloniex/tree/master/examples/public)
 
 ## Trading Api
 ~~~go
@@ -137,9 +137,8 @@ if err != nil{
 }
 fmt.Println(resp)
 ~~~
-* See [Trading Api Examples](https://github.com/iowar/poloniex/tree/master/examples/trading)
+* See [Trading Api Examples](https://github.com/keltanas/poloniex/tree/master/examples/trading)
 
 License
 ----
-[MIT](https://github.com/iowar/poloniex/blob/master/LICENSE)
-
+[MIT](https://github.com/keltanas/poloniex/blob/master/LICENSE)

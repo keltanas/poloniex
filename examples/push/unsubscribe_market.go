@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	polo "github.com/iowar/poloniex"
+	polo "github.com/keltanas/poloniex"
 )
 
 func main() {
@@ -21,7 +21,7 @@ func main() {
 
 	go func() {
 		time.Sleep(time.Second * 10)
-		ws.UnsubscribeMarket("USDT_BTC")
+		_ = ws.UnsubscribeMarket("USDT_BTC")
 	}()
 
 	for {

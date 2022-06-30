@@ -1,11 +1,11 @@
-//the following code shows
-//how to access NewTrade fields.
+// the following code shows
+// how to access NewTrade fields.
 package main
 
 import (
 	"fmt"
 
-	polo "github.com/iowar/poloniex"
+	polo "github.com/keltanas/poloniex"
 )
 
 func main() {

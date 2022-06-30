@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	polo "github.com/iowar/poloniex"
+	polo "github.com/keltanas/poloniex"
 )
 
 func main() {

@@ -5,7 +5,7 @@ import (
 	"log"
 	"time"
 
-	polo "github.com/iowar/poloniex"
+	polo "github.com/keltanas/poloniex"
 )
 
 func main() {

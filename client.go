@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	origin        = "https://api2.poloniex.com/"
+	// origin https://api2.poloniex.com/
 	pushAPIUrl    = "wss://api2.poloniex.com/realm1"
 	publicAPIUrl  = "https://poloniex.com/public?command="
 	tradingAPIUrl = "https://poloniex.com/tradingApi"
@@ -64,7 +64,9 @@ func (p *Poloniex) publicRequest(action string, respch chan<- []byte, errch chan
 		return
 	}
 
-	defer resp.Body.Close()
+	defer func() {
+		errch <- resp.Body.Close()
+	}()
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		respch <- body
@@ -159,7 +161,10 @@ func (p *Poloniex) tradingRequest(action string, parameters map[string]string,
 		return
 	}
 
-	defer resp.Body.Close()
+	defer func() {
+		errch <- resp.Body.Close()
+	}()
+
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		respch <- body
