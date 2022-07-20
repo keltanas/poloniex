@@ -7,6 +7,8 @@ import (
 	"sync"
 	"time"
 
+	"go.uber.org/zap"
+
 	"github.com/gorilla/websocket"
 )
 
@@ -28,11 +30,11 @@ type subscription struct {
 }
 
 func (s subscription) toJSON() ([]byte, bool) {
-	json, err := json.Marshal(s)
+	b, err := json.Marshal(s)
 	if err != nil {
-		return json, false
+		return b, false
 	}
-	return json, true
+	return b, true
 }
 
 // for ticker update.
@@ -138,7 +140,7 @@ func setChannelsId() (err error) {
 }
 
 // Create new web socket client.
-func NewWSClient() (wsClient *WSClient, err error) {
+func NewWSClient(log *zap.Logger) (wsClient *WSClient, err error) {
 	dialer := &websocket.Dialer{
 		HandshakeTimeout: time.Minute,
 	}
@@ -162,7 +164,15 @@ func NewWSClient() (wsClient *WSClient, err error) {
 		for {
 			err := wsClient.wsHandler()
 			if err != nil {
-				ws, _, _ := dialer.Dial(pushAPIUrl, nil)
+				log.Error("poloniex ws handler", zap.Error(err))
+			}
+			if err != nil {
+				ws, _, err = dialer.Dial(pushAPIUrl, nil)
+				if err != nil {
+					log.Error("poloniex websocket dial", zap.Error(err))
+					time.Sleep(time.Second)
+					continue
+				}
 				wsClient.wsConn = ws
 			}
 		}
