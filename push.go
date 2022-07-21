@@ -128,6 +128,7 @@ func setChannelsId() (err error) {
 		return err
 	}
 
+	marketChannels = make([]int, 0, len(tickers))
 	for k, v := range tickers {
 		channelsByName[k] = v.ID
 		channelsByID[v.ID] = k
@@ -165,8 +166,6 @@ func NewWSClient(log *zap.Logger) (wsClient *WSClient, err error) {
 			err := wsClient.wsHandler()
 			if err != nil {
 				log.Error("poloniex ws handler", zap.Error(err))
-			}
-			if err != nil {
 				ws, _, err = dialer.Dial(pushAPIUrl, nil)
 				if err != nil {
 					log.Error("poloniex websocket dial", zap.Error(err))
@@ -174,6 +173,9 @@ func NewWSClient(log *zap.Logger) (wsClient *WSClient, err error) {
 					continue
 				}
 				wsClient.wsConn = ws
+				if err = setChannelsId(); err != nil {
+					return
+				}
 			}
 		}
 	}()

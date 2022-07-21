@@ -4,12 +4,15 @@ import (
 	"fmt"
 	"time"
 
+	"go.uber.org/zap"
+
 	polo "github.com/keltanas/poloniex"
 )
 
 func main() {
 
-	ws, err := polo.NewWSClient()
+	log, _ := zap.NewDevelopment()
+	ws, err := polo.NewWSClient(log)
 	if err != nil {
 		return
 	}

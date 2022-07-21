@@ -2,14 +2,16 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"time"
+
+	"go.uber.org/zap"
 
 	polo "github.com/keltanas/poloniex"
 )
 
 func main() {
-	ws, err := polo.NewWSClient()
+	log, _ := zap.NewDevelopment()
+	ws, err := polo.NewWSClient(log)
 	if err != nil {
 		return
 	}
@@ -18,7 +20,7 @@ func main() {
 	if err != nil {
 		return
 	}
-	log.Print("Subscribed to USDT_BTC channel.")
+	log.Info("Subscribed to USDT_BTC channel.")
 	go func() {
 		for {
 			fmt.Println(<-ws.Subs["USDT_BTC"], ws.Subs)
@@ -30,7 +32,7 @@ func main() {
 	if err != nil {
 		return
 	}
-	log.Print("Unsubscribed from USDT_BTC channel.")
+	log.Info("Unsubscribed from USDT_BTC channel.")
 	time.Sleep(time.Second * 10)
 
 	err = ws.SubscribeMarket("USDT_BTC")
@@ -38,6 +40,6 @@ func main() {
 		panic(err)
 		return
 	}
-	log.Print("Subscribed to USDT_BTC channel.")
+	log.Info("Subscribed to USDT_BTC channel.")
 	time.Sleep(time.Second * 50)
 }
