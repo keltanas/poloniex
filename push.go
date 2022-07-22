@@ -172,7 +172,12 @@ func NewWSClient(log *zap.Logger) (wsClient *WSClient, err error) {
 					time.Sleep(time.Second)
 					continue
 				}
-				wsClient.wsConn = ws
+				wsClient = &WSClient{
+					wsConn:  ws,
+					Subs:    make(map[string]chan interface{}),
+					wsMutex: &sync.Mutex{},
+				}
+
 				if err = setChannelsId(); err != nil {
 					return
 				}
