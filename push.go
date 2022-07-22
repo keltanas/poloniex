@@ -96,6 +96,7 @@ type WSClient struct {
 	wsConn     *websocket.Conn             // websocket connection
 	wsMutex    *sync.Mutex                 // prevent race condition for websocket RW
 	sync.Mutex                             // embedded mutex
+	log        *zap.Logger
 }
 
 // Web socket reader.
@@ -104,6 +105,9 @@ func (ws *WSClient) readMessage() ([]byte, error) {
 	defer ws.wsMutex.Unlock()
 	_, rmsg, err := ws.wsConn.ReadMessage()
 	if err != nil {
+		if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
+			ws.log.Warn("poloniex socket read", zap.Error(err))
+		}
 		return nil, err
 	}
 	return rmsg, nil
@@ -142,23 +146,18 @@ func setChannelsId() (err error) {
 
 // Create new web socket client.
 func NewWSClient(log *zap.Logger) (wsClient *WSClient, err error) {
-	dialer := &websocket.Dialer{
-		HandshakeTimeout: time.Minute,
-	}
-
-	ws, _, err := dialer.Dial(pushAPIUrl, nil)
-	if err != nil {
-		return
-	}
-
 	wsClient = &WSClient{
-		wsConn:  ws,
 		Subs:    make(map[string]chan interface{}),
 		wsMutex: &sync.Mutex{},
+		log:     log,
+	}
+
+	if err = wsClient.dial(); err != nil {
+		return nil, err
 	}
 
 	if err = setChannelsId(); err != nil {
-		return
+		return nil, err
 	}
 
 	go func() {
@@ -166,16 +165,10 @@ func NewWSClient(log *zap.Logger) (wsClient *WSClient, err error) {
 			err := wsClient.wsHandler()
 			if err != nil {
 				log.Error("poloniex ws handler", zap.Error(err))
-				ws, _, err = dialer.Dial(pushAPIUrl, nil)
-				if err != nil {
-					log.Error("poloniex websocket dial", zap.Error(err))
+
+				if err := wsClient.dial(); err != nil {
 					time.Sleep(time.Second)
 					continue
-				}
-				wsClient = &WSClient{
-					wsConn:  ws,
-					Subs:    make(map[string]chan interface{}),
-					wsMutex: &sync.Mutex{},
 				}
 
 				if err = setChannelsId(); err != nil {
@@ -185,6 +178,34 @@ func NewWSClient(log *zap.Logger) (wsClient *WSClient, err error) {
 		}
 	}()
 	return
+}
+
+func (ws *WSClient) dial() error {
+	if ws.wsConn != nil {
+		if err := ws.wsConn.Close(); err != nil {
+			ws.log.Warn("poloniex closing ws connection")
+		}
+	}
+	dialer := &websocket.Dialer{
+		HandshakeTimeout: time.Minute,
+	}
+	wsConn, _, err := dialer.Dial(pushAPIUrl, nil)
+	if err != nil {
+		ws.log.Error("poloniex dial to socket", zap.Error(err))
+		return err
+	}
+	wsConn.SetPongHandler(func(appData string) error {
+		ws.log.Info("poloniex pong " + appData)
+		_ = ws.wsConn.SetReadDeadline(time.Now().Add(time.Minute))
+		return nil
+	})
+	ws.log.Info("poloniex establishment connection",
+		zap.String("remote_addr", wsConn.RemoteAddr().String()),
+		zap.String("local_addr", wsConn.LocalAddr().String()),
+	)
+
+	ws.wsConn = wsConn
+	return nil
 }
 
 // Create handler.
