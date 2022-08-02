@@ -148,27 +148,31 @@ func setChannelsId() (err error) {
 
 // Create new web socket client.
 func NewWSClient(log *zap.Logger) (wsClient *WSClient, err error) {
-	wsClient = &WSClient{
+	return &WSClient{
 		Subs:    make(map[string]chan interface{}),
 		wsMutex: &sync.Mutex{},
 		log:     log,
-	}
+	}, nil
+}
 
-	if err = wsClient.dial(); err != nil {
-		return nil, err
+func (ws *WSClient) Start() (err error) {
+	if err = ws.dial(); err != nil {
+		return err
 	}
 
 	if err = setChannelsId(); err != nil {
-		return nil, err
+		return err
 	}
 
+	wg := make(chan struct{})
 	go func() {
+		wg <- struct{}{}
 		for {
-			err := wsClient.wsHandler()
+			err := ws.wsHandler()
 			if err != nil {
-				log.Error("poloniex ws handler", zap.Error(err))
+				ws.log.Error("poloniex ws handler", zap.Error(err))
 
-				if err := wsClient.dial(); err != nil {
+				if err := ws.dial(); err != nil {
 					time.Sleep(time.Second)
 					continue
 				}
@@ -179,7 +183,8 @@ func NewWSClient(log *zap.Logger) (wsClient *WSClient, err error) {
 			}
 		}
 	}()
-	return
+	<-wg
+	return nil
 }
 
 func (ws *WSClient) dial() error {

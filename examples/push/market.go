@@ -16,6 +16,10 @@ func main() {
 		return
 	}
 
+	if err = ws.Start(); err != nil {
+		return
+	}
+
 	err = ws.SubscribeMarket("USDT_BTC")
 	if err != nil {
 		return
