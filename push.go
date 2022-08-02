@@ -5,7 +5,9 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
+	"unsafe"
 
 	"go.uber.org/zap"
 
@@ -194,16 +196,20 @@ func (ws *WSClient) dial() error {
 		ws.log.Error("poloniex dial to socket", zap.Error(err))
 		return err
 	}
-	wsConn.SetPongHandler(func(appData string) error {
-		ws.log.Info("poloniex pong " + appData)
-		_ = ws.wsConn.SetReadDeadline(time.Now().Add(time.Minute))
-		return nil
-	})
-	ws.log.Info("poloniex establishment connection",
+	wsConn.SetPongHandler(
+		func(appData string) error {
+			ws.log.Info("poloniex pong " + appData)
+			_ = ws.wsConn.SetReadDeadline(time.Now().Add(time.Minute))
+			return nil
+		},
+	)
+	ws.log.Info(
+		"poloniex establishment connection",
 		zap.String("remote_addr", wsConn.RemoteAddr().String()),
 		zap.String("local_addr", wsConn.LocalAddr().String()),
 	)
 
+	atomic.SwapPointer((*unsafe.Pointer)(unsafe.Pointer(&ws.wsConn)), unsafe.Pointer(wsConn))
 	ws.wsConn = wsConn
 	return nil
 }
