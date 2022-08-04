@@ -107,9 +107,9 @@ func (ws *WSClient) readMessage() ([]byte, error) {
 	defer ws.wsMutex.Unlock()
 	_, rmsg, err := ws.wsConn.ReadMessage()
 	if err != nil {
-		if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
-			ws.log.Warn("poloniex socket read", zap.Error(err))
-		}
+		// if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
+		// }
+		ws.log.Warn("poloniex socket read", zap.Error(err))
 		return nil, err
 	}
 	return rmsg, nil
@@ -119,7 +119,7 @@ func (ws *WSClient) readMessage() ([]byte, error) {
 func (ws *WSClient) writeMessage(msg []byte) error {
 	ws.wsMutex.Lock()
 	defer ws.wsMutex.Unlock()
-	return ws.wsConn.WriteMessage(1, msg)
+	return ws.wsConn.WriteMessage(websocket.TextMessage, msg)
 }
 
 // Set channels.
@@ -176,10 +176,6 @@ func (ws *WSClient) Start() (err error) {
 					time.Sleep(time.Second)
 					continue
 				}
-
-				if err = setChannelsId(); err != nil {
-					return
-				}
 			}
 		}
 	}()
@@ -188,6 +184,8 @@ func (ws *WSClient) Start() (err error) {
 }
 
 func (ws *WSClient) dial() error {
+	ws.wsMutex.Lock()
+	defer ws.wsMutex.Unlock()
 	if ws.wsConn != nil {
 		if err := ws.wsConn.Close(); err != nil {
 			ws.log.Warn("poloniex closing ws connection")
@@ -201,6 +199,11 @@ func (ws *WSClient) dial() error {
 		ws.log.Error("poloniex dial to socket", zap.Error(err))
 		return err
 	}
+	wsConn.SetPingHandler(func(appData string) error {
+		ws.log.Info("poloniex ping " + appData)
+		_ = ws.wsConn.SetReadDeadline(time.Now().Add(time.Minute))
+		return nil
+	})
 	wsConn.SetPongHandler(
 		func(appData string) error {
 			ws.log.Info("poloniex pong " + appData)
@@ -457,6 +460,7 @@ func (ws *WSClient) subscribe(chid int, chname string) (err error) {
 
 	err = ws.writeMessage(subsMsg)
 	if err != nil {
+		ws.log.Warn("poloniex write", zap.Error(err))
 		return
 	}
 
@@ -481,6 +485,7 @@ func (ws *WSClient) unsubscribe(chname string) (err error) {
 
 	err = ws.writeMessage(unSubsMsg)
 	if err != nil {
+		ws.log.Warn("poloniex write", zap.Error(err))
 		return err
 	}
 
